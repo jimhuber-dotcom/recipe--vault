@@ -1,5 +1,5 @@
 -- =============================================================================
--- Recipe Vault — Migration 001: Initial Schema  (revision 2)
+-- Recipe Vault — Migration 001: Initial Schema  (revision 4)
 -- =============================================================================
 -- Version 1 scope: profiles, recipes and their child records, cocktail details,
 -- taxonomy (tags / collections / equipment), shopping stores, cooking history,
