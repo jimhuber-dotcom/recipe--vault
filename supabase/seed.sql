@@ -1,0 +1,4 @@
+-- Recipe Vault — local seed data
+-- Runs on `supabase db reset` AFTER all migrations in supabase/migrations/.
+-- Local development only. Never referenced by remote deploys.
+-- Seed data is NOT schema: no DDL in this file, ever.
