@@ -3,11 +3,12 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
 // Serif display face for headings — warm, high-contrast, cookbook feel.
+// Fraunces is a variable font, so the full weight range is available without
+// listing weights explicitly.
 const display = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
 });
 
 // Clean sans for body copy and UI.
