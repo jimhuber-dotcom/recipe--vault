@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Design tokens — the single source of truth for color and type.
+   Warm off-white ground, forest-green primary, copper accent.
+   Referenced by tailwind.config.ts; do not hardcode hex values elsewhere.
+   ========================================================================== */
+:root {
+  /* Surfaces */
+  --color-bg: #f6f1e7; /* warm off-white ground */
+  --color-surface: #fffdf9; /* cards */
+  --color-surface-muted: #efe8da; /* subtle raised / inset panels */
+  --color-border: #e4dac8;
+
+  /* Text */
+  --color-text: #2a2620; /* warm near-black */
+  --color-text-muted: #6e6558;
+
+  /* Forest green — primary */
+  --color-primary: #22503b;
+  --color-primary-hover: #1a4030;
+  --color-primary-foreground: #f6f1e7;
+
+  /* Copper — accent */
+  --color-accent: #b87333;
+  --color-accent-hover: #9e6027;
+  --color-accent-foreground: #fffdf9;
+
+  /* Feedback */
+  --color-success: #3b6b4a;
+  --color-danger: #a23b2e;
+
+  /* Focus ring */
+  --color-ring: #22503b;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+
+  /* Consistent, on-brand focus treatment for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
