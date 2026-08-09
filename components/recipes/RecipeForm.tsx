@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createRecipe, updateRecipe } from "@/app/(app)/recipes/actions";
+import { completeImport } from "@/app/(app)/import/actions";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -109,12 +110,14 @@ function Label({ children }: { children: React.ReactNode }) {
 export function RecipeForm({
   mode,
   recipeId,
+  importId,
   tags,
   collections,
   initial,
 }: {
   mode: "create" | "edit";
   recipeId?: string;
+  importId?: string;
   tags: Tag[];
   collections: Collection[];
   initial?: RecipeFormInitial;
@@ -285,6 +288,9 @@ export function RecipeForm({
         return;
       }
       if (res.id) {
+        if (mode === "create" && importId) {
+          await completeImport(importId, res.id);
+        }
         router.push(`/recipes/${res.id}`);
         router.refresh();
       }

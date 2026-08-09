@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { UploadIcon } from "@/components/nav/icons";
+import { ImportUploader } from "@/components/import/ImportUploader";
 
 export const metadata: Metadata = { title: "Import" };
 
@@ -10,14 +9,12 @@ export default function ImportPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Capture"
-        title="Import"
-        description="Bring in a recipe from a screenshot, photo, link, or pasted text."
+        title="Import a recipe"
+        description="Upload a photo and Claude reads it into a recipe you can review and save."
       />
-      <EmptyState
-        icon={<UploadIcon className="h-6 w-6" />}
-        title="Import isn't wired up yet"
-        description="The capture and AI-extraction pipeline arrives in a later phase."
-      />
+      <div className="max-w-2xl">
+        <ImportUploader />
+      </div>
     </div>
   );
 }
