@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
@@ -12,20 +13,43 @@ function isPublicPath(pathname: string): boolean {
   );
 }
 
+function configError(message: string): NextResponse {
+  return new NextResponse(message, {
+    status: 500,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
+}
+
 /**
  * Refreshes the auth session on every request and enforces the route guard:
  *   - unauthenticated on a protected route  -> redirect to /login
  *   - authenticated hitting /login          -> redirect to the dashboard
+ *
+ * If the deployment is misconfigured (missing/invalid Supabase env vars) we
+ * return a readable message rather than letting the middleware crash with an
+ * opaque MIDDLEWARE_INVOCATION_FAILED.
  */
 export async function updateSession(
   request: NextRequest,
 ): Promise<NextResponse> {
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
+  if (!supabaseUrl || !supabaseKey) {
+    const missing = !supabaseUrl
+      ? "NEXT_PUBLIC_SUPABASE_URL"
+      : "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
+    return configError(
+      `Configuration error: ${missing} is not set for this deployment. ` +
+        `Add it in Vercel → Settings → Environment Variables, then redeploy.`,
+    );
+  }
+
+  let supabaseResponse = NextResponse.next({ request });
+  let user: User | null = null;
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -40,14 +64,19 @@ export async function updateSession(
           );
         },
       },
-    },
-  );
+    });
 
-  // Do not run code between createServerClient and getUser() — it must be the
-  // first call so the session cookie is refreshed before any guard decision.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // Must be the first call after createServerClient so the session cookie is
+    // refreshed before any guard decision.
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch (err) {
+    return configError(
+      `Supabase auth check failed: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
 
   const { pathname } = request.nextUrl;
 
