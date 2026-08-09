@@ -3,6 +3,9 @@
 Free-plan workflow. No paid Supabase branches. Local Docker is the development
 environment; the hosted Supabase project is production.
 
+> **Web app:** the Next.js frontend and its Vercel deployment are documented in
+> [`docs/web.md`](docs/web.md). This file covers the database only.
+
 ## Environments
 
 | Environment | What it is | How schema arrives |
