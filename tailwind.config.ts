@@ -35,8 +35,14 @@ const config: Config = {
           hover: "var(--color-accent-hover)",
           foreground: "var(--color-accent-foreground)",
         },
-        success: "var(--color-success)",
-        danger: "var(--color-danger)",
+        success: {
+          DEFAULT: "var(--color-success)",
+          soft: "var(--color-success-soft)",
+        },
+        danger: {
+          DEFAULT: "var(--color-danger)",
+          soft: "var(--color-danger-soft)",
+        },
         ring: "var(--color-ring)",
       },
       fontFamily: {

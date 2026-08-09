@@ -30,7 +30,9 @@
 
   /* Feedback */
   --color-success: #3b6b4a;
+  --color-success-soft: #e4ede5; /* banner background */
   --color-danger: #a23b2e;
+  --color-danger-soft: #f4e3df; /* banner background */
 
   /* Focus ring */
   --color-ring: #22503b;
