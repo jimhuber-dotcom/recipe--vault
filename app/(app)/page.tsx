@@ -192,13 +192,13 @@ export default async function DashboardPage() {
               <EmptyState
                 icon={<UploadIcon className="h-6 w-6" />}
                 title="No recipes yet"
-                description="Once you import or add a recipe, the most recent ones show up here."
+                description="Once you add a recipe, the most recent ones show up here."
                 action={
                   <Link
-                    href="/import"
+                    href="/recipes/new"
                     className={buttonClasses({ variant: "primary" })}
                   >
-                    Import a recipe
+                    Add a recipe
                   </Link>
                 }
               />
