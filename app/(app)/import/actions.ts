@@ -20,10 +20,30 @@ export async function completeImport(
 
   const { data: imp } = await supabase
     .from("imports")
-    .select("storage_path")
+    .select("storage_path, extracted_payload")
     .eq("id", importId)
     .maybeSingle();
-  const sourcePath = (imp as { storage_path: string | null } | null)?.storage_path;
+  const record = imp as {
+    storage_path: string | null;
+    extracted_payload: {
+      field_provenance?: Record<string, string>;
+      ai_review_flags?: { field: string; reason: string }[];
+    } | null;
+  } | null;
+  const sourcePath = record?.storage_path;
+
+  // Record what the AI read vs. reconstructed, so the recipe stays honest about
+  // which parts came from the photo. (Values reflect the extraction snapshot;
+  // later hand-edits aren't re-tracked in this first version.)
+  const payload = record?.extracted_payload;
+  await supabase
+    .from("recipes")
+    .update({
+      confidence: "reconstructed",
+      field_provenance: payload?.field_provenance ?? {},
+      ai_review_flags: payload?.ai_review_flags ?? [],
+    })
+    .eq("id", recipeId);
 
   if (sourcePath) {
     const { data: blob } = await supabase.storage

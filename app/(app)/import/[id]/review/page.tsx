@@ -104,7 +104,7 @@ export default async function ReviewImportPage({
     prep_minutes: numToStr(payload.prep_minutes),
     cook_minutes: numToStr(payload.cook_minutes),
     difficulty: payload.difficulty ?? "",
-    recipe_status: "needs_review",
+    recipe_status: "reconstructed_from_photo",
     is_favorite: false,
     ingredients: (payload.ingredients ?? []).map((i) => ({
       section: i.section ?? "",
@@ -122,13 +122,35 @@ export default async function ReviewImportPage({
     collectionIds: [],
   };
 
+  const reviewFlags = payload.ai_review_flags ?? [];
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Review & edit"
         title="Check what Claude read"
-        description="Fix anything that's off, then save. The photo becomes the recipe's cover."
+        description="Claude read the photo and filled in the rest to make it cookable. Check the highlighted parts, fix anything that's off, then save. The photo becomes the cover."
       />
+
+      {reviewFlags.length > 0 ? (
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <p className="text-sm font-medium text-foreground">
+            Claude filled in some gaps — worth a quick check:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground-muted">
+            {reviewFlags.map((flag, i) => (
+              <li key={i}>
+                <span className="font-medium capitalize text-foreground">
+                  {flag.field.replace(/_/g, " ")}
+                </span>
+                {" — "}
+                {flag.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <RecipeForm
         mode="create"
         importId={id}

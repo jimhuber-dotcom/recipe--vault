@@ -18,6 +18,11 @@ export interface ExtractedStep {
   instruction: string;
 }
 
+export interface ReviewFlag {
+  field: string;
+  reason: string;
+}
+
 export interface ExtractedRecipe {
   title: string;
   subtitle: string | null;
@@ -35,6 +40,8 @@ export interface ExtractedRecipe {
   notes: string | null;
   ingredients: ExtractedIngredient[];
   steps: ExtractedStep[];
+  field_provenance: Record<string, string>;
+  ai_review_flags: ReviewFlag[];
 }
 
 export interface ExtractionResult {
@@ -89,17 +96,48 @@ const SAVE_RECIPE_TOOL = {
           required: ["instruction"],
         },
       },
+      field_provenance: {
+        type: "object",
+        description:
+          "Map of field name to origin: 'extracted' (read from the image), 'reconstructed' (completed from knowledge of the dish), or 'estimated' (a reasonable guess).",
+        additionalProperties: {
+          type: "string",
+          enum: ["extracted", "reconstructed", "estimated"],
+        },
+      },
+      ai_review_flags: {
+        type: "array",
+        description: "Fields a human should double-check.",
+        items: {
+          type: "object",
+          properties: {
+            field: { type: "string" },
+            reason: { type: "string" },
+          },
+          required: ["field", "reason"],
+        },
+      },
     },
     required: ["title", "ingredients", "steps"],
   },
 } as const;
 
 const PROMPT =
-  "Read the recipe in this image and record it with the save_recipe tool. " +
-  "Transcribe faithfully: use the exact ingredient amounts, units, and wording " +
-  "shown, and keep the steps in order. Leave a field out if the image does not " +
-  "state it — do not invent values. If ingredients or steps are grouped under " +
-  "headings (e.g. 'For the sauce'), put that heading in the section field.";
+  "Read the recipe in this image, then produce a COMPLETE, cookable version " +
+  "with the save_recipe tool.\n\n" +
+  "First, transcribe everything the image states — title, ingredients, steps, " +
+  "and any amounts or times — exactly as written.\n\n" +
+  "Then fill the gaps so someone could actually cook this dish: add sensible " +
+  "ingredient quantities and units, include standard ingredients the dish needs " +
+  "but the image omits (salt, oil, broth, and so on), estimate prep time, cook " +
+  "time, and servings, and expand the method into clear, ordered steps. Base " +
+  "these on well-known technique for this specific dish, stay consistent with " +
+  "everything the image shows, and never contradict it.\n\n" +
+  "In field_provenance, mark each field you set as 'extracted' (read directly " +
+  "from the image), 'reconstructed' (completed from knowledge of the dish), or " +
+  "'estimated' (a reasonable guess such as a time or serving count). In " +
+  "ai_review_flags, list the fields most worth a human's double-check, each " +
+  "with a short reason.";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function str(v: any): string | null {
@@ -156,6 +194,19 @@ function normalize(input: any): ExtractedRecipe {
         instruction: str(s?.instruction) ?? "",
       }))
       .filter((s: ExtractedStep) => s.instruction.length > 0),
+    field_provenance:
+      input?.field_provenance && typeof input.field_provenance === "object"
+        ? (input.field_provenance as Record<string, string>)
+        : {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ai_review_flags: (Array.isArray(input?.ai_review_flags)
+      ? input.ai_review_flags
+      : []
+    )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((f: any) => str(f?.field) && str(f?.reason))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((f: any) => ({ field: String(f.field), reason: String(f.reason) })),
   };
 }
 
@@ -179,7 +230,7 @@ export async function extractRecipeFromImage(
     },
     body: JSON.stringify({
       model: "claude-opus-5",
-      max_tokens: 4096,
+      max_tokens: 8000,
       // Forced tool call → structured output; thinking disabled is required with
       // a forced tool_choice and keeps latency/cost down for a single extraction.
       thinking: { type: "disabled" },
