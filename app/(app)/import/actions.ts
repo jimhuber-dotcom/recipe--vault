@@ -92,3 +92,30 @@ export async function completeImport(
   revalidatePath("/");
   return {};
 }
+
+/** Drop an import from the queue without saving it (e.g. an unreadable photo). */
+export async function discardImport(
+  importId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+
+  const { data: imp } = await supabase
+    .from("imports")
+    .select("storage_path")
+    .eq("id", importId)
+    .maybeSingle();
+  const path = (imp as { storage_path: string | null } | null)?.storage_path;
+
+  const { error } = await supabase
+    .from("imports")
+    .update({ status: "discarded" })
+    .eq("id", importId);
+  if (error) return { error: error.message };
+
+  if (path) {
+    await supabase.storage.from("temp-imports").remove([path]);
+  }
+
+  revalidatePath("/inbox");
+  return {};
+}

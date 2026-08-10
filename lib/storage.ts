@@ -18,11 +18,19 @@ export async function signImagePath(path: string): Promise<string | null> {
 export async function signImagePaths(
   paths: string[],
 ): Promise<Map<string, string>> {
+  return signPathsInBucket(RECIPE_IMAGE_BUCKET, paths);
+}
+
+/** Signed URLs for any private bucket (e.g. temp-imports for the Inbox). */
+export async function signPathsInBucket(
+  bucket: string,
+  paths: string[],
+): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   if (paths.length === 0) return result;
   const supabase = await createClient();
   const { data } = await supabase.storage
-    .from(RECIPE_IMAGE_BUCKET)
+    .from(bucket)
     .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
   (data ?? []).forEach((entry) => {
     if (entry.path && entry.signedUrl) result.set(entry.path, entry.signedUrl);
